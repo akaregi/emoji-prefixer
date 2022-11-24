@@ -1,61 +1,36 @@
 package main
 
 import (
+	ea "emojiaffixer/pkg/affix"
+	em "emojiaffixer/pkg/emoji"
+	pr "emojiaffixer/pkg/printer"
 	"flag"
 	"fmt"
-	"regexp"
 	"strings"
 )
 
 func main() {
-	// Initialize the command-line arguments
-	var (
-		prefix    string
-		delimiter string
-		verbose   bool
-	)
+	prefix := flag.String("p", "", "Prefix to be attached to message.")
+	suffix := flag.String("s", "", "Suffix to be attached to message.")
 
-	var REGIONAL_INDICATOR = "regional_indicator_"
-
-	flag.StringVar(&prefix, "p", REGIONAL_INDICATOR, "Prefix to be attached to message.")
 	// NOTE: delimiter's default value is ZWSP(Zero Witch Space).
-	flag.StringVar(&delimiter, "d", "​", "Delimiter to concatenate the text")
-	flag.BoolVar(&verbose, "v", false, "Verbose mode?")
+	delimiter := flag.String("d", "​", "Delimiter to concatenate the text")
+	verbose := flag.Bool("v", false, "Verbose mode?")
 
 	flag.Parse()
 
-	// Initialize other things
-	var validPattern = regexp.MustCompile(`[a-zA-Z]`)
-	var matchPattern func(string) bool
-
-	if prefix == REGIONAL_INDICATOR {
-		matchPattern = func(t string) bool {
-			return validPattern.MatchString(t)
-		}
-	} else {
-		matchPattern = func(t string) bool {
-			return true
-		}
-	}
+	affixProps := ea.NewAffixProps(prefix, suffix)
+	printer := pr.NewPrinterProps(verbose, delimiter)
 
 	// GO GO GO
-	var args = strings.Join(flag.Args(), " ")
-	var text = strings.Split(args, "")
-
-	if verbose {
-		fmt.Printf("Parameter prefix   : \"%s\"\n", prefix)
-		fmt.Printf("Parameter delimtier: \"%s\"\n", delimiter)
-	}
-
-	var texts []string
+	var text = strings.Split(strings.Join(flag.Args(), " "), "")
+	var emojis []string
 
 	for _, t := range text {
-		if t != " " && matchPattern(t) {
-			texts = append(texts, ":"+prefix+strings.ToLower(t)+":")
-		} else {
-			texts = append(texts, t)
-		}
+		emoji := em.GetEmojiExpression(t, affixProps)
+		emojis = append(emojis, emoji)
 	}
 
-	fmt.Printf("%s\n", strings.Join(texts, delimiter))
+	// TODO: Implement this line on printer
+	fmt.Printf("%s\n", strings.Join(emojis, printer.Delimiter))
 }
