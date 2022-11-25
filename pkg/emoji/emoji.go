@@ -53,6 +53,8 @@ func translateSymbol(s string) string {
 		return "exclamation"
 	case "?":
 		return "question"
+	case "*":
+		return "asterisk"
 	default:
 		panic(fmt.Sprintf("Expected: Symbol. Actual: %s.", s))
 	}
